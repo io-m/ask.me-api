@@ -8,19 +8,25 @@ import (
 	"github.com/askme/api/internal/domain"
 )
 
-// Response is a standard API response wrapper
-type Response struct {
+// Response is a standard API response wrapper with generic data type
+type Response[T any] struct {
 	Success bool   `json:"success"`
-	Data    any    `json:"data,omitempty"`
+	Data    T      `json:"data,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
 
-// JSON writes a JSON response
-func JSON(w http.ResponseWriter, status int, data any) {
+// ErrorResponse is used for error responses without data
+type ErrorResponse struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
+}
+
+// JSON writes a type-safe JSON response
+func JSON[T any](w http.ResponseWriter, status int, data T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	resp := Response{
+	resp := Response[T]{
 		Success: status >= 200 && status < 300,
 		Data:    data,
 	}
@@ -33,7 +39,7 @@ func Error(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	resp := Response{
+	resp := ErrorResponse{
 		Success: false,
 		Error:   message,
 	}
