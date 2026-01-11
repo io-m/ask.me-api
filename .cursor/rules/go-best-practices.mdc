@@ -1,0 +1,426 @@
+---
+description: Go best practices for solid, concurrent-safe code
+globs: ["**/*.go"]
+---
+
+# Go Best Practices
+
+## Error Handling
+
+### Always wrap errors with context
+```go
+// Good
+if err != nil {
+    return nil, fmt.Errorf("get user by id: %w", err)
+}
+
+// Bad
+if err != nil {
+    return nil, err
+}
+```
+
+### Use sentinel errors for domain errors
+```go
+// Define in domain/errors.go
+var (
+    ErrNotFound      = errors.New("resource not found")
+    ErrAlreadyExists = errors.New("resource already exists")
+)
+
+// Check with errors.Is
+if errors.Is(err, domain.ErrNotFound) {
+    // handle not found
+}
+```
+
+### Don't ignore errors
+```go
+// Bad
+json.Marshal(data) // error ignored
+
+// Good
+data, err := json.Marshal(data)
+if err != nil {
+    return fmt.Errorf("marshal data: %w", err)
+}
+```
+
+---
+
+## Concurrency
+
+### Use errgroup for parallel operations
+```go
+import "golang.org/x/sync/errgroup"
+
+g, ctx := errgroup.WithContext(ctx)
+
+g.Go(func() error {
+    // operation 1
+    return nil
+})
+
+g.Go(func() error {
+    // operation 2
+    return nil
+})
+
+if err := g.Wait(); err != nil {
+    return err
+}
+```
+
+### Capture loop variables in goroutines
+```go
+// Good
+for i, item := range items {
+    i, item := i, item // capture
+    g.Go(func() error {
+        return process(i, item)
+    })
+}
+
+// Bad - race condition
+for i, item := range items {
+    g.Go(func() error {
+        return process(i, item) // i and item change
+    })
+}
+```
+
+### Context propagation
+- Always pass context as first parameter
+- Use context for cancellation and timeouts
+- Don't store context in structs
+
+```go
+// Good
+func (s *service) GetUser(ctx context.Context, id string) (*User, error)
+
+// Bad
+func (s *service) GetUser(id string) (*User, error)
+```
+
+### Avoid goroutine leaks
+```go
+// Bad - goroutine may leak
+go func() {
+    result <- expensiveOperation()
+}()
+
+// Good - respect context cancellation
+go func() {
+    select {
+    case <-ctx.Done():
+        return
+    case result <- expensiveOperation():
+    }
+}()
+```
+
+---
+
+## Interface Design
+
+### Define interfaces where they're used (consumer side)
+```go
+// In service package (consumer)
+type UserRepository interface {
+    GetByID(ctx context.Context, id string) (*User, error)
+}
+
+// In repository package (implementation)
+type repository struct { db *arango.Client }
+func (r *repository) GetByID(ctx context.Context, id string) (*User, error) { ... }
+```
+
+### Keep interfaces small
+```go
+// Good - focused interface
+type Reader interface {
+    Read(ctx context.Context, id string) (*Entity, error)
+}
+
+// Bad - too broad
+type Repository interface {
+    Create(...)
+    Read(...)
+    Update(...)
+    Delete(...)
+    List(...)
+    Search(...)
+    // ... 20 more methods
+}
+```
+
+### Accept interfaces, return structs
+```go
+// Good
+func NewService(repo Repository) *service {
+    return &service{repo: repo}
+}
+
+// Enables easy mocking and testing
+```
+
+---
+
+## Repository Pattern
+
+### Keep AQL queries in separate files
+```go
+// aql.go
+const GetUserByID = `
+    FOR u IN users
+    FILTER u._key == @key
+    RETURN u
+`
+
+// repository.go
+func (r *repository) GetByID(ctx context.Context, id string) (*User, error) {
+    return arango.QueryOne[User](ctx, r.db, GetUserByID, map[string]any{"key": id})
+}
+```
+
+### Use generics for type-safe queries
+```go
+func Query[T any](ctx context.Context, db *Client, query string, vars map[string]any) ([]T, error)
+func QueryOne[T any](ctx context.Context, db *Client, query string, vars map[string]any) (*T, error)
+```
+
+---
+
+## Dependency Injection
+
+### Constructor injection
+```go
+type service struct {
+    repo    Repository
+    cache   Cache
+    logger  *slog.Logger
+}
+
+func NewService(repo Repository, cache Cache, logger *slog.Logger) Service {
+    return &service{
+        repo:   repo,
+        cache:  cache,
+        logger: logger,
+    }
+}
+```
+
+### Wire dependencies in main.go or dedicated wire file
+```go
+func initializeApp(db *arango.Client) *App {
+    userRepo := user.NewRepository(db)
+    userService := user.NewService(userRepo)
+    userHandler := user.NewHandler(userService)
+    // ...
+}
+```
+
+---
+
+## Code Organization
+
+### Feature-first structure
+```
+internal/
+├── user/
+│   ├── interfaces.go   # Repository, Service, Handler interfaces
+│   ├── entity.go       # Domain types
+│   ├── aql.go          # AQL queries
+│   ├── repository.go   # Repository implementation
+│   ├── service.go      # Business logic
+│   └── handler.go      # HTTP handlers
+```
+
+### Package naming
+- Use singular names: `user`, not `users`
+- Avoid generic names: `util`, `common`, `helper`
+- Package name should match directory name
+
+### Export only what's needed
+```go
+// Exported (public)
+type Service interface { ... }
+func NewService() Service { ... }
+
+// Unexported (private)
+type service struct { ... }
+func (s *service) helper() { ... }
+```
+
+---
+
+## Struct Tags
+
+### JSON tags for API types
+```go
+type User struct {
+    Key       string `json:"_key,omitempty"`
+    Username  string `json:"username"`
+    CreatedAt int64  `json:"createdAt"`
+}
+```
+
+### Use omitempty for optional fields
+```go
+type Post struct {
+    PollOptions []string `json:"pollOptions,omitempty"` // Only for polls
+}
+```
+
+---
+
+## Logging
+
+### Use structured logging with slog
+```go
+import "log/slog"
+
+slog.Info("user created", "userId", user.Key, "username", user.Username)
+slog.Error("failed to create user", "error", err, "username", req.Username)
+```
+
+### Don't log and return error
+```go
+// Bad - error logged twice
+if err != nil {
+    slog.Error("failed", "error", err)
+    return err
+}
+
+// Good - log at top level only, or return with context
+if err != nil {
+    return fmt.Errorf("operation failed: %w", err)
+}
+```
+
+---
+
+## Testing
+
+### Table-driven tests
+```go
+func TestNormalizeCategory(t *testing.T) {
+    tests := []struct {
+        name     string
+        input    string
+        expected PostCategory
+    }{
+        {"valid category", "career", CategoryCareer},
+        {"invalid category", "invalid", CategoryOther},
+        {"empty string", "", CategoryOther},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := NormalizeCategory(tt.input)
+            if got != tt.expected {
+                t.Errorf("got %v, want %v", got, tt.expected)
+            }
+        })
+    }
+}
+```
+
+### Mock interfaces for unit tests
+```go
+type mockRepository struct {
+    users map[string]*User
+}
+
+func (m *mockRepository) GetByID(ctx context.Context, id string) (*User, error) {
+    if user, ok := m.users[id]; ok {
+        return user, nil
+    }
+    return nil, nil
+}
+```
+
+---
+
+## Performance
+
+### Preallocate slices when size is known
+```go
+// Good
+results := make([]User, 0, len(ids))
+
+// Bad
+var results []User
+```
+
+### Use sync.Pool for frequently allocated objects
+```go
+var bufferPool = sync.Pool{
+    New: func() any {
+        return new(bytes.Buffer)
+    },
+}
+
+buf := bufferPool.Get().(*bytes.Buffer)
+defer bufferPool.Put(buf)
+buf.Reset()
+```
+
+### Avoid unnecessary allocations in hot paths
+```go
+// Bad - allocates on every call
+func (s *service) process() {
+    data := make(map[string]any)
+    // ...
+}
+
+// Good - reuse or pass as parameter
+func (s *service) process(data map[string]any) {
+    // ...
+}
+```
+
+---
+
+## HTTP Handlers
+
+### Use consistent response format
+```go
+type Response struct {
+    Success bool   `json:"success"`
+    Data    any    `json:"data,omitempty"`
+    Error   string `json:"error,omitempty"`
+}
+```
+
+### Validate input early
+```go
+func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+    req, err := httputil.DecodeJSON[CreateUserRequest](r)
+    if err != nil {
+        httputil.Error(w, http.StatusBadRequest, "invalid request body")
+        return
+    }
+
+    if req.Username == "" {
+        httputil.Error(w, http.StatusBadRequest, "username is required")
+        return
+    }
+
+    // proceed with valid input
+}
+```
+
+### Map domain errors to HTTP status codes
+```go
+func ErrorFromDomain(w http.ResponseWriter, err error) {
+    switch {
+    case errors.Is(err, domain.ErrNotFound):
+        Error(w, http.StatusNotFound, err.Error())
+    case errors.Is(err, domain.ErrAlreadyExists):
+        Error(w, http.StatusConflict, err.Error())
+    default:
+        Error(w, http.StatusInternalServerError, "internal server error")
+    }
+}
+```
