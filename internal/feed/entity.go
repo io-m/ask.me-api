@@ -17,6 +17,7 @@ type FeedLastMessage struct {
 	Status        domain.MessageStatus `json:"status"`
 	CreatedAt     int64                `json:"createdAt"`
 	FormattedTime string               `json:"formattedTime"`
+	MyReaction    *string              `json:"myReaction,omitempty"`
 }
 
 // FeedItem represents a single item in the feed
@@ -32,6 +33,7 @@ type FeedItem struct {
 	Author      FeedAuthor          `json:"author"`
 	ChatID      *string             `json:"chatId,omitempty"`
 	LastMessage *FeedLastMessage    `json:"lastMessage,omitempty"`
+	UnreadCount int                 `json:"unreadCount"`
 	CreatedAt   int64               `json:"createdAt"`
 }
 

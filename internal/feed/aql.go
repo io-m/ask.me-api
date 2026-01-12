@@ -57,6 +57,22 @@ const (
 				RETURN m
 			) : null
 			
+			// Get user's reaction to last message (if any)
+			LET myReaction = lastMsg ? FIRST(
+				FOR e IN reacted
+				FILTER e._from == @userId AND e._to == lastMsg._id
+				RETURN e.emoji
+			) : null
+			
+			// Count unread messages (messages not from user and not seen)
+			LET unreadCount = userChat ? LENGTH(
+				FOR m IN messages
+				FILTER m.chatId == userChat._id
+				   AND m.senderId != @userId
+				   AND m.status != 'seen'
+				RETURN 1
+			) : 0
+			
 			// Get tags
 			LET postTags = (
 				FOR edge IN post_has_tag
@@ -96,8 +112,10 @@ const (
 					text: lastMsg.text,
 					senderId: LAST(SPLIT(lastMsg.senderId, "/")),
 					status: lastMsg.status,
-					createdAt: lastMsg.createdAt
+					createdAt: lastMsg.createdAt,
+					myReaction: myReaction
 				} : null,
+				unreadCount: unreadCount,
 				createdAt: p.createdAt
 			}
 	`

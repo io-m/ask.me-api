@@ -42,6 +42,8 @@ db-setup:
 		-H "Content-Type: application/json" -d '{"name": "tagged", "type": 3}' || true
 	@curl -u root:rootpassword -X POST http://localhost:8529/_db/askme/_api/collection \
 		-H "Content-Type: application/json" -d '{"name": "voted", "type": 3}' || true
+	@curl -u root:rootpassword -X POST http://localhost:8529/_db/askme/_api/collection \
+		-H "Content-Type: application/json" -d '{"name": "reacted", "type": 3}' || true
 	@echo "\nDatabase setup complete!"
 
 # Seed mock data

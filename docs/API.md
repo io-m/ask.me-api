@@ -681,8 +681,10 @@ X-User-ID: u-johndoe
           "senderId": "users/u3",
           "status": "delivered",
           "createdAt": 1736000000000,
-          "formattedTime": "5 days ago"
+          "formattedTime": "5 days ago",
+          "myReaction": "🥰"
         },
+        "unreadCount": 2,
         "createdAt": 1736000000000
       }
     ],
@@ -727,6 +729,8 @@ For poll posts, the response includes a `pollOptions` array:
 - The `pollOptions` field is only present for posts with `postType: "poll"`
 - The `chatId` and `lastMessage` fields are only present if the user has an existing conversation on the post
 - The `formattedTime` field is computed server-side (e.g., "5 days ago", "1 week ago")
+- The `unreadCount` field indicates the number of unread messages in the chat thread (messages not from the user and not marked as seen)
+- The `myReaction` field in `lastMessage` contains the authenticated user's emoji reaction to the last message (null if no reaction)
 
 ---
 
