@@ -24,6 +24,8 @@ X-User-ID: u-johndoe
 
 > **Note:** This is a development mock. In production, this will be replaced with proper JWT/OAuth authentication.
 
+The default test user is `u-johndoe` which has seed data for chats, responses, and feed items.
+
 ## Response Format
 
 All responses follow this structure:
@@ -58,8 +60,9 @@ Get user profile by ID.
 {
   "success": true,
   "data": {
-    "_key": "u1",
-    "username": "alex_dev",
+    "_key": "u-johndoe",
+    "username": "johndoe",
+    "avatarUrl": "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=face",
     "createdAt": 1736000000000,
     "interests": ["tech", "career"],
     "blockedTopics": [],
@@ -111,7 +114,7 @@ Follow another user. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Response:**
@@ -189,7 +192,7 @@ Create a text post. The backend automatically classifies the content using AI. R
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Request:**
@@ -222,7 +225,7 @@ Create a poll post. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Request:**
@@ -244,7 +247,7 @@ Respond to a post (starts a chat). Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Request:**
@@ -276,7 +279,7 @@ Vote on a poll. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Request:**
@@ -316,7 +319,7 @@ Get all chat threads for the authenticated user. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Query Parameters:**
@@ -473,7 +476,7 @@ Send a message in a chat. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Request:**
@@ -535,7 +538,7 @@ Accept a group chat invite. Requires authentication. No request body needed.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Response:**
@@ -558,7 +561,7 @@ Mute chat notifications. Requires authentication. No request body needed.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Response:**
@@ -576,6 +579,62 @@ X-User-ID: u1
 
 ---
 
+## Messages
+
+### POST /messages/{messageId}/react 🔒
+
+React to a message with an emoji. Pass empty emoji string to remove reaction. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u-johndoe
+```
+
+**Request:**
+
+```json
+{
+  "emoji": "❤️"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "messageId": "m1-1",
+    "emoji": "❤️"
+  }
+}
+```
+
+**Remove Reaction:**
+
+```json
+{
+  "emoji": ""
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "messageId": "m1-1",
+    "emoji": ""
+  }
+}
+```
+
+---
+
 ## Feed
 
 ### GET /me/feed 🔒
@@ -585,7 +644,7 @@ Get personalized feed for the authenticated user. Requires authentication.
 **Headers:**
 
 ```http
-X-User-ID: u1
+X-User-ID: u-johndoe
 ```
 
 **Query Parameters:**

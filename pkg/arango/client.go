@@ -62,6 +62,7 @@ const (
 	EdgeParticipatesIn Collection = "participates_in"
 	EdgeTagged         Collection = "tagged"
 	EdgeVoted          Collection = "voted"
+	EdgeReacted        Collection = "reacted"
 )
 
 // Query executes an AQL query and returns results

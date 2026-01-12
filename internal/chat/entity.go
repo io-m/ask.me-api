@@ -151,3 +151,25 @@ type MuteChatResponse struct {
 	ChatID  string                   `json:"chatId"`
 	Status  domain.ParticipantStatus `json:"status"`
 }
+
+// ReactedEdge represents a user's reaction to a message
+type ReactedEdge struct {
+	From      string `json:"_from"`
+	To        string `json:"_to"`
+	Emoji     string `json:"emoji"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+// ReactToMessageRequest is the request for reacting to a message
+type ReactToMessageRequest struct {
+	UserID    string `json:"userId"`
+	MessageID string `json:"messageId"`
+	Emoji     string `json:"emoji"`
+}
+
+// ReactToMessageResponse is the response for reacting to a message
+type ReactToMessageResponse struct {
+	Success   bool   `json:"success"`
+	MessageID string `json:"messageId"`
+	Emoji     string `json:"emoji"`
+}

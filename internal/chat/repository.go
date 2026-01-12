@@ -113,3 +113,28 @@ func (r *repository) GetChatForPostAndUser(ctx context.Context, postID, userID s
 		"userId": fmt.Sprintf("users/%s", userID),
 	})
 }
+
+func (r *repository) GetReaction(ctx context.Context, userID, messageID string) (*ReactedEdge, error) {
+	return arango.QueryOne[ReactedEdge](ctx, r.db, GetReaction, map[string]any{
+		"from": fmt.Sprintf("users/%s", userID),
+		"to":   fmt.Sprintf("messages/%s", messageID),
+	})
+}
+
+func (r *repository) UpsertReaction(ctx context.Context, edge *ReactedEdge) error {
+	_, err := arango.Query[ReactedEdge](ctx, r.db, UpsertReaction, map[string]any{
+		"from":      edge.From,
+		"to":        edge.To,
+		"emoji":     edge.Emoji,
+		"createdAt": edge.CreatedAt,
+	})
+	return err
+}
+
+func (r *repository) DeleteReaction(ctx context.Context, userID, messageID string) error {
+	_, err := arango.Query[any](ctx, r.db, DeleteReaction, map[string]any{
+		"from": fmt.Sprintf("users/%s", userID),
+		"to":   fmt.Sprintf("messages/%s", messageID),
+	})
+	return err
+}

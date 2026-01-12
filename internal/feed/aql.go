@@ -94,7 +94,7 @@ const (
 				lastMessage: lastMsg ? {
 					id: lastMsg._key,
 					text: lastMsg.text,
-					senderId: lastMsg.senderId,
+					senderId: LAST(SPLIT(lastMsg.senderId, "/")),
 					status: lastMsg.status,
 					createdAt: lastMsg.createdAt
 				} : null,

@@ -18,8 +18,9 @@ User profiles and preferences.
 
 ```json
 {
-  "_key": "u1",
-  "username": "alex_dev",
+  "_key": "u-johndoe",
+  "username": "johndoe",
+  "avatarUrl": "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=face",
   "createdAt": 1736000000000,
   "interests": ["tech", "career"],
   "blockedTopics": ["politics"],
@@ -56,18 +57,18 @@ Questions and polls created by users.
 ```json
 {
   "_key": "p1",
-  "authorId": "users/u1",
+  "authorId": "users/u-sandro",
   "postType": "text",
-  "text": "How do I switch from frontend to backend engineering?",
-  "category": "career",
+  "text": "I think my boyfriend is lying to me about where he was last night. How do I confront him without sounding accusatory?",
+  "category": "relationships",
   "intent": "seeking-advice",
   "depth": "serious",
-  "tags": ["career-change", "backend-dev"],
+  "tags": ["relationships"],
   "aiRaw": {
-    "category": "career",
+    "category": "relationships",
     "intent": "seeking-advice",
     "depth": "serious",
-    "tags": ["career change", "backend dev"],
+    "tags": ["relationships", "trust"],
     "confidence": 0.92,
     "risk": "low",
     "flags": []
@@ -80,20 +81,20 @@ Questions and polls created by users.
 ```json
 {
   "_key": "p3",
-  "authorId": "users/u5",
+  "authorId": "users/u-taylor",
   "postType": "poll",
-  "text": "Which frontend framework do you prefer?",
-  "pollOptions": ["React", "Vue", "Angular", "Svelte"],
+  "text": "What's your dream travel destination?",
+  "pollOptions": ["Japan", "Italy", "New Zealand", "Iceland"],
   "pollVotes": {
-    "React": 15,
-    "Vue": 8,
-    "Angular": 3,
-    "Svelte": 6
+    "Japan": 15,
+    "Italy": 8,
+    "New Zealand": 3,
+    "Iceland": 6
   },
-  "category": "tech",
+  "category": "travel",
   "intent": "seeking-opinion",
   "depth": "casual",
-  "tags": ["frontend", "frameworks"],
+  "tags": ["travel"],
   "createdAt": 1736000000000
 }
 ```
@@ -202,12 +203,12 @@ Edges connect documents and enable graph traversals.
 Links users to posts they authored.
 
 ```
-users/u1 ──[created]──▶ posts/p1
+users/u-sandro ──[created]──▶ posts/p1
 ```
 
 ```json
 {
-  "_from": "users/u1",
+  "_from": "users/u-sandro",
   "_to": "posts/p1",
   "createdAt": 1736000000000
 }
@@ -222,12 +223,12 @@ users/u1 ──[created]──▶ posts/p1
 Links users to posts they responded to.
 
 ```
-users/u3 ──[responded]──▶ posts/p1
+users/u-johndoe ──[responded]──▶ posts/p1
 ```
 
 ```json
 {
-  "_from": "users/u3",
+  "_from": "users/u-johndoe",
   "_to": "posts/p1",
   "chatId": "chats/c1",
   "createdAt": 1736000000000
@@ -263,13 +264,13 @@ posts/p1 ──[post_has_tag]──▶ tags/backend-dev
 Links users who follow each other.
 
 ```
-users/u1 ──[follows]──▶ users/u3
+users/u-johndoe ──[follows]──▶ users/u-maria
 ```
 
 ```json
 {
-  "_from": "users/u1",
-  "_to": "users/u3",
+  "_from": "users/u-johndoe",
+  "_to": "users/u-maria",
   "createdAt": 1736000000000
 }
 ```
@@ -283,15 +284,15 @@ users/u1 ──[follows]──▶ users/u3
 Links users to chats they're part of.
 
 ```
-users/u1 ──[participates_in]──▶ chats/c1
-users/u3 ──[participates_in]──▶ chats/c1
+users/u-sandro ──[participates_in]──▶ chats/c1
+users/u-johndoe ──[participates_in]──▶ chats/c1
 ```
 
 ```json
 {
-  "_from": "users/u1",
+  "_from": "users/u-johndoe",
   "_to": "chats/c1",
-  "role": "author",
+  "role": "responder",
   "status": "active",
   "joinedAt": 1736000000000
 }
@@ -311,13 +312,13 @@ users/u3 ──[participates_in]──▶ chats/c1
 Links posts to users mentioned/tagged.
 
 ```
-posts/p4 ──[tagged]──▶ users/u1
+posts/p-group-1 ──[tagged]──▶ users/u-johndoe
 ```
 
 ```json
 {
-  "_from": "posts/p4",
-  "_to": "users/u1",
+  "_from": "posts/p-group-1",
+  "_to": "users/u-johndoe",
   "taggedAt": 1736000000000
 }
 ```
@@ -331,12 +332,12 @@ posts/p4 ──[tagged]──▶ users/u1
 Links users to polls they voted on.
 
 ```
-users/u1 ──[voted]──▶ posts/p3
+users/u-johndoe ──[voted]──▶ posts/p3
 ```
 
 ```json
 {
-  "_from": "users/u1",
+  "_from": "users/u-johndoe",
   "_to": "posts/p3",
   "option": "React",
   "votedAt": 1736000000000
@@ -344,6 +345,27 @@ users/u1 ──[voted]──▶ posts/p3
 ```
 
 **Use case:** Prevent duplicate votes, show user's vote.
+
+---
+
+### `reacted`
+
+Links users to messages they reacted to.
+
+```
+users/u-johndoe ──[reacted]──▶ messages/m1-1
+```
+
+```json
+{
+  "_from": "users/u-johndoe",
+  "_to": "messages/m1-1",
+  "emoji": "❤️",
+  "createdAt": 1736000000000
+}
+```
+
+**Use case:** Show emoji reactions on messages, toggle reactions.
 
 ---
 
@@ -386,7 +408,8 @@ users/u1 ──[voted]──▶ posts/p3
 
 ### Get user's posts with tags
 ```aql
-FOR post IN 1..1 OUTBOUND @userId created
+// Example: Get posts by u-johndoe with their tags
+FOR post IN 1..1 OUTBOUND "users/u-johndoe" created
   LET tags = (
     FOR tag IN 1..1 OUTBOUND post post_has_tag
     RETURN tag.label
@@ -396,22 +419,32 @@ FOR post IN 1..1 OUTBOUND @userId created
 
 ### Get feed from followed users
 ```aql
-FOR followed IN 1..1 OUTBOUND @userId follows
+// Example: Get feed for u-johndoe from followed users
+FOR followed IN 1..1 OUTBOUND "users/u-johndoe" follows
   FOR post IN 1..1 OUTBOUND followed created
     SORT post.createdAt DESC
-    LIMIT @limit
+    LIMIT 20
     RETURN post
 ```
 
 ### Get chat participants
 ```aql
-FOR user IN 1..1 INBOUND @chatId participates_in
+// Example: Get participants in chat c1
+FOR user IN 1..1 INBOUND "chats/c1" participates_in
   RETURN user
 ```
 
 ### Find posts by tag
 ```aql
-FOR post IN 1..1 INBOUND @tagId post_has_tag
+// Example: Find posts tagged with "tech"
+FOR post IN 1..1 INBOUND "tags/tech" post_has_tag
   SORT post.createdAt DESC
   RETURN post
+```
+
+### Get user's reactions on messages
+```aql
+// Example: Get u-johndoe's reactions
+FOR msg IN 1..1 OUTBOUND "users/u-johndoe" reacted
+  RETURN { messageId: msg._key, emoji: msg.emoji }
 ```

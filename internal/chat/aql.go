@@ -130,7 +130,7 @@ const (
 			question: {
 				id: post._key,
 				text: post.text,
-				authorId: post.authorId,
+				authorId: LAST(SPLIT(post.authorId, "/")),
 				createdAt: post.createdAt
 			},
 			partner: {
@@ -142,7 +142,7 @@ const (
 			lastMessage: {
 				id: lastMsg._key,
 				text: lastMsg.text,
-				senderId: lastMsg.senderId,
+				senderId: LAST(SPLIT(lastMsg.senderId, "/")),
 				createdAt: lastMsg.createdAt
 			},
 			unreadCount: unreadCount,
@@ -158,5 +158,28 @@ const (
 		FILTER edge._to == c._id
 		   AND edge._from == @userId
 		RETURN c
+	`
+
+	// GetReaction retrieves a user's reaction to a message
+	GetReaction = `
+		FOR e IN reacted
+		FILTER e._from == @from AND e._to == @to
+		RETURN e
+	`
+
+	// DeleteReaction removes a user's reaction to a message
+	DeleteReaction = `
+		FOR e IN reacted
+		FILTER e._from == @from AND e._to == @to
+		REMOVE e IN reacted
+	`
+
+	// UpsertReaction creates or updates a user's reaction to a message
+	UpsertReaction = `
+		UPSERT { _from: @from, _to: @to }
+		INSERT { _from: @from, _to: @to, emoji: @emoji, createdAt: @createdAt }
+		UPDATE { emoji: @emoji, createdAt: @createdAt }
+		IN reacted
+		RETURN NEW
 	`
 )

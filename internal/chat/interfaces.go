@@ -27,6 +27,11 @@ type Repository interface {
 	// Chat thread queries
 	GetUserChatThreads(ctx context.Context, userID string, limit int, cursor string) ([]ChatThread, string, error)
 	GetChatForPostAndUser(ctx context.Context, postID, userID string) (*Chat, error)
+
+	// Reaction operations
+	GetReaction(ctx context.Context, userID, messageID string) (*ReactedEdge, error)
+	UpsertReaction(ctx context.Context, edge *ReactedEdge) error
+	DeleteReaction(ctx context.Context, userID, messageID string) error
 }
 
 // Service defines the interface for chat business logic
@@ -38,6 +43,7 @@ type Service interface {
 	MuteChat(ctx context.Context, chatID string, req *MuteChatRequest) (*MuteChatResponse, error)
 	GetParticipants(ctx context.Context, chatID string) (*ParticipantsResponse, error)
 	CreateChat(ctx context.Context, postID string, chatType domain.ChatType, participants []string) (string, error)
+	ReactToMessage(ctx context.Context, req *ReactToMessageRequest) (*ReactToMessageResponse, error)
 }
 
 // Handler defines the interface for chat HTTP handlers
@@ -48,4 +54,5 @@ type Handler interface {
 	AcceptChat(w http.ResponseWriter, r *http.Request)
 	MuteChat(w http.ResponseWriter, r *http.Request)
 	GetParticipants(w http.ResponseWriter, r *http.Request)
+	ReactToMessage(w http.ResponseWriter, r *http.Request)
 }

@@ -28,6 +28,9 @@ func (a *App) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /chats/{chatId}/mute", a.chatHandler.MuteChat)
 	mux.HandleFunc("GET /chats/{chatId}/participants", a.chatHandler.GetParticipants)
 
+	// Message routes
+	mux.HandleFunc("POST /messages/{messageId}/react", a.chatHandler.ReactToMessage)
+
 	// Tag routes
 	mux.HandleFunc("GET /tags/{tagId}", a.tagHandler.GetTag)
 	mux.HandleFunc("GET /tags", a.tagHandler.ListTags)

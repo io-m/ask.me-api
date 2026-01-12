@@ -162,3 +162,37 @@ func (h *handler) GetParticipants(w http.ResponseWriter, r *http.Request) {
 
 	httputil.JSON(w, http.StatusOK, resp)
 }
+
+// ReactToMessage handles POST /messages/{messageId}/react
+func (h *handler) ReactToMessage(w http.ResponseWriter, r *http.Request) {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	messageID := httputil.PathValue(r, "messageId")
+	if messageID == "" {
+		httputil.Error(w, http.StatusBadRequest, "messageId is required")
+		return
+	}
+
+	req, err := httputil.DecodeJSON[ReactToMessageRequest](r)
+	if err != nil {
+		httputil.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// Set user from authenticated user
+	req.UserID = currentUserID
+	req.MessageID = messageID
+
+	resp, err := h.service.ReactToMessage(r.Context(), req)
+	if err != nil {
+		httputil.ErrorFromDomain(w, err)
+		return
+	}
+
+	httputil.JSON(w, http.StatusOK, resp)
+}

@@ -230,6 +230,38 @@ func (s *service) CreateChat(ctx context.Context, postID string, chatType domain
 	return chatID, nil
 }
 
+func (s *service) ReactToMessage(ctx context.Context, req *ReactToMessageRequest) (*ReactToMessageResponse, error) {
+	// Empty emoji means remove reaction
+	if req.Emoji == "" {
+		if err := s.repo.DeleteReaction(ctx, req.UserID, req.MessageID); err != nil {
+			return nil, fmt.Errorf("delete reaction: %w", err)
+		}
+		return &ReactToMessageResponse{
+			Success:   true,
+			MessageID: req.MessageID,
+			Emoji:     "",
+		}, nil
+	}
+
+	now := time.Now().UnixMilli()
+	edge := &ReactedEdge{
+		From:      fmt.Sprintf("users/%s", req.UserID),
+		To:        fmt.Sprintf("messages/%s", req.MessageID),
+		Emoji:     req.Emoji,
+		CreatedAt: now,
+	}
+
+	if err := s.repo.UpsertReaction(ctx, edge); err != nil {
+		return nil, fmt.Errorf("upsert reaction: %w", err)
+	}
+
+	return &ReactToMessageResponse{
+		Success:   true,
+		MessageID: req.MessageID,
+		Emoji:     req.Emoji,
+	}, nil
+}
+
 // formatTime formats a timestamp to a human-readable string
 func formatTime(timestamp int64) string {
 	t := time.UnixMilli(timestamp)

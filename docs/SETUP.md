@@ -97,6 +97,7 @@ internal/user/
 - `messages` - Chat messages
 
 ### Edge Collections
+
 - `created` - users → posts (authorship)
 - `responded` - users → posts (responses)
 - `post_has_tag` - posts → tags
@@ -104,34 +105,87 @@ internal/user/
 - `participates_in` - users → chats
 - `tagged` - posts → users
 - `voted` - users → posts (poll votes)
+- `reacted` - users → messages (emoji reactions)
 
 ## Seed Data
 
-The seeder creates:
+The seeder **truncates all collections first** to ensure a clean state, then creates data aligned with the frontend mocks.
 
-**Users (5):**
-- `u1` alex_dev - tech/career enthusiast
-- `u2` maria_chen - health/lifestyle
-- `u3` john_doe - finance/career
-- `u4` sarah_k - relationships/fun
-- `u5` dev_master - tech/education
+**Users (24):**
 
-**Posts (7):**
-- `p1` Frontend→Backend question (career, serious)
-- `p2` Morning routine question (lifestyle, casual)
-- `p3` Framework poll - React/Vue/Angular/Svelte (tech)
-- `p4` Remote job success story (career)
-- `p5` Partner finances question (relationships, serious)
-- `p6` Learning Go question (education)
-- `p7` Sleep hours poll (health)
+| ID | Username | Description |
+|----|----------|-------------|
+| `u-johndoe` | johndoe | Main logged-in user (default for testing) |
+| `u-sandro` | sandro_r | Relationship question author |
+| `u-maria` | maria_dev | Tech developer, imposter syndrome responder |
+| `u-jordan` | jordantech | Career advice seeker |
+| `u-taylor` | taylor_wanderlust | Travel enthusiast |
+| `u-emma` | emma_wellness | Work-life balance author |
+| `u-lucas` | lucasmartinez | 20s mistakes question author |
+| `u-alex` | alex_innovator | Tech stack enthusiast |
+| `u-olivia` | olivia_health | Health & wellness |
+| `u-alice` | alice_wfh | Remote work expert |
+| `u-bob` | bob_coder | Software developer |
+| `u-david` | david_tech | Tech stack question author |
+| `u-oliver` | oliver_senior | Senior developer |
+| `u-sarah` | sarah_japan | Japan travel expert |
+| `u-mike` | mike_adventures | Travel enthusiast |
+| `u-tom` | tom_reader | Book club member |
+| `u-lisa` | lisa_books | Book club member |
+| `u-rachel` | rachel_lit | Book club member |
+| `u-maya` | maya_coffee | Coffee vs tea author |
+| `u-chris` | chris_beans | Coffee enthusiast |
+| `u-anna` | anna_matcha | Tea enthusiast |
+| `u-nina` | nina_fullstack | Full-stack developer |
+| `u-james` | james_growth | Personal growth |
+| `u-sophie` | sophie_balance | Life balance advocate |
 
-**Chats (3):**
-- `c1` about p1: alex_dev ↔ john_doe
-- `c2` about p2: maria_chen ↔ dev_master
-- `c3` about p4: john_doe ↔ alex_dev
+**Posts (18):**
+
+Posts johndoe can respond to:
+- `p1` Sandro's relationship post
+- `p2` Maria's imposter syndrome question
+- `p3` Taylor's travel poll (poll)
+- `p4` Jordan's 20-year-old advice question
+- `p5` Taylor's destination poll (poll)
+- `p6` Emma's work-life balance question
+- `p7` Lucas's biggest 20s mistake question
+
+Johndoe's own questions:
+- `q-mine-1` Remote work focus question
+- `q-mine-2` Imposter syndrome question
+- `q-mine-3` Japan trip recommendations (group chat)
+- `q-mine-4` Book club recommendations (group chat)
+
+Group chat posts:
+- `p-group-1` David's tech stack question (group)
+- `p-group-2` Maya's coffee vs tea (group)
+
+Plus additional posts for variety.
+
+**Chats (12):**
+
+Direct chats (johndoe responding to others):
+- `c1` p1 - johndoe ↔ sandro
+- `c4` p4 - johndoe ↔ jordan
+- `c6` p6 - johndoe ↔ emma
+- `c7` p7 - johndoe ↔ lucas
+
+Direct chats (others responding to johndoe's questions):
+- `chat-1` q-mine-1 - johndoe ↔ alice
+- `chat-2` q-mine-1 - johndoe ↔ bob
+- `chat-7` q-mine-2 - johndoe ↔ maria
+- `chat-8` q-mine-2 - johndoe ↔ oliver
+
+Group chats:
+- `chat-group-1` q-mine-3 - Japan trip (johndoe, sarah, mike, emma)
+- `chat-group-2` p-group-1 - Tech stack (david, johndoe, alex, nina)
+- `chat-group-3` q-mine-4 - Book club (johndoe, lisa, tom, rachel)
+- `chat-group-4` p-group-2 - Coffee vs Tea (maya, johndoe, chris, anna)
 
 **Tags (10):**
-career-change, backend-dev, frontend, remote-work, productivity, relationships, health-tips, investing, frameworks, learning
+
+career, tech, relationships, travel, wellness, personal-growth, productivity, books, food, remote-work
 
 ## Testing Endpoints
 
@@ -140,8 +194,13 @@ Use the `api.http` file with VS Code REST Client extension or similar.
 Example:
 ```http
 ### Get user
-GET http://localhost:8080/users/u1
+GET http://localhost:8080/users/u-johndoe
 
-### Get feed for user
-GET http://localhost:8080/feed?userId=u1&limit=10
+### Get feed for authenticated user
+GET http://localhost:8080/me/feed
+X-User-ID: u-johndoe
+
+### Get chats for authenticated user
+GET http://localhost:8080/me/chats
+X-User-ID: u-johndoe
 ```
