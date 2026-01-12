@@ -30,15 +30,15 @@ func NewApp(db *arango.Client) *App {
 	tagService := tag.NewService(tagRepo)
 	tagHandler := tag.NewHandler(tagService)
 
-	// Post feature (depends on tag service for tag normalization)
-	postRepo := post.NewRepository(db)
-	postService := post.NewService(postRepo, tagService)
-	postHandler := post.NewHandler(postService)
-
-	// Chat feature
+	// Chat feature (needed by post service)
 	chatRepo := chat.NewRepository(db)
 	chatService := chat.NewService(chatRepo)
 	chatHandler := chat.NewHandler(chatService)
+
+	// Post feature (depends on tag and chat services)
+	postRepo := post.NewRepository(db)
+	postService := post.NewService(postRepo, tagService, chatService)
+	postHandler := post.NewHandler(postService)
 
 	// Feed feature (depends on post and chat repos for aggregation)
 	feedRepo := feed.NewRepository(db)

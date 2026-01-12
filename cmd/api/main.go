@@ -42,14 +42,15 @@ func main() {
 	app.RegisterRoutes(mux)
 
 	// Apply middleware chain (order matters: outermost first)
-	// Recovery -> RequestID -> Logger -> SecureHeaders -> CORS -> JSON -> handler
+	// Recovery -> RequestID -> Logger -> SecureHeaders -> CORS -> FakeAuth -> JSON -> handler
 	handler := middleware.Chain(
 		mux,
 		middleware.Recovery,      // Recover from panics (outermost)
 		middleware.RequestID,     // Add request ID for tracing
 		middleware.Logger,        // Log all requests
 		middleware.SecureHeaders, // Add security headers
-		middleware.CORS(middleware.DefaultCORSConfig()), // Handle CORS
+		middleware.CORS(middleware.DefaultCORSConfig()),         // Handle CORS
+		middleware.FakeAuth(middleware.DefaultFakeAuthConfig()), // Fake auth for dev (extracts X-User-ID header)
 		middleware.JSON, // Set JSON content type
 	)
 

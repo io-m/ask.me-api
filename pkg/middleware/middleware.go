@@ -17,11 +17,21 @@ type contextKey string
 const (
 	// RequestIDKey is the context key for the request ID.
 	RequestIDKey contextKey = "requestID"
+	// UserIDKey is the context key for the authenticated user ID.
+	UserIDKey contextKey = "userID"
 )
 
 // GetRequestID retrieves the request ID from the context.
 func GetRequestID(ctx context.Context) string {
 	if id, ok := ctx.Value(RequestIDKey).(string); ok {
+		return id
+	}
+	return ""
+}
+
+// GetUserID retrieves the authenticated user ID from the context.
+func GetUserID(ctx context.Context) string {
+	if id, ok := ctx.Value(UserIDKey).(string); ok {
 		return id
 	}
 	return ""
@@ -112,6 +122,51 @@ func generateRequestID() string {
 		return intToString(int(time.Now().UnixNano()))
 	}
 	return hex.EncodeToString(b)
+}
+
+// FakeAuthConfig holds configuration for the fake auth middleware.
+type FakeAuthConfig struct {
+	// HeaderName is the header to read the user ID from (default: "X-User-ID")
+	HeaderName string
+	// DefaultUserID is the fallback user ID if header is missing (default: "u-johndoe")
+	DefaultUserID string
+	// Required if true, returns 401 when no user ID is provided (default: false)
+	Required bool
+}
+
+// DefaultFakeAuthConfig returns default configuration for development.
+func DefaultFakeAuthConfig() FakeAuthConfig {
+	return FakeAuthConfig{
+		HeaderName:    "X-User-ID",
+		DefaultUserID: "u-johndoe",
+		Required:      false,
+	}
+}
+
+// FakeAuth is a development middleware that extracts user ID from a header.
+// DO NOT use in production - this is for development/testing only.
+func FakeAuth(config FakeAuthConfig) func(http.Handler) http.Handler {
+	if config.HeaderName == "" {
+		config.HeaderName = "X-User-ID"
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userID := r.Header.Get(config.HeaderName)
+
+			if userID == "" {
+				if config.Required {
+					http.Error(w, `{"success":false,"error":"unauthorized"}`, http.StatusUnauthorized)
+					return
+				}
+				userID = config.DefaultUserID
+			}
+
+			// Add user ID to context
+			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
 // Recovery recovers from panics and returns a 500 Internal Server Error.

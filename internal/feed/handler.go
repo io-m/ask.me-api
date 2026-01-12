@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/askme/api/pkg/httputil"
+	"github.com/askme/api/pkg/middleware"
 )
 
 type handler struct {
@@ -15,16 +16,17 @@ func NewHandler(service Service) Handler {
 	return &handler{service: service}
 }
 
-// GetFeed handles GET /feed
+// GetFeed handles GET /me/feed
 func (h *handler) GetFeed(w http.ResponseWriter, r *http.Request) {
-	userID := httputil.QueryString(r, "userId", "")
-	if userID == "" {
-		httputil.Error(w, http.StatusBadRequest, "userId query parameter is required")
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
 	query := FeedQuery{
-		UserID:   userID,
+		UserID:   currentUserID,
 		Limit:    httputil.QueryInt(r, "limit", 20),
 		Cursor:   httputil.QueryString(r, "cursor", ""),
 		Category: httputil.QueryString(r, "category", ""),

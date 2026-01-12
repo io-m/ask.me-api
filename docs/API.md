@@ -14,6 +14,16 @@ ask.me is a question-driven social API where users post questions, receive respo
 http://localhost:8080
 ```
 
+## Authentication
+
+All authenticated endpoints require the `X-User-ID` header:
+
+```http
+X-User-ID: u-johndoe
+```
+
+> **Note:** This is a development mock. In production, this will be replaced with proper JWT/OAuth authentication.
+
 ## Response Format
 
 All responses follow this structure:
@@ -94,16 +104,14 @@ Create a new user.
 }
 ```
 
-### POST /users/{userId}/follow
+### POST /me/follow/{userId} 🔒
 
-Follow another user.
+Follow another user. Requires authentication.
 
-**Request:**
+**Headers:**
 
-```json
-{
-  "followUserId": "u2"
-}
+```http
+X-User-ID: u1
 ```
 
 **Response:**
@@ -174,15 +182,20 @@ Get post details with AI classification data.
 }
 ```
 
-### POST /posts
+### POST /posts 🔒
 
-Create a text post. The backend automatically classifies the content using AI.
+Create a text post. The backend automatically classifies the content using AI. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Request:**
 
 ```json
 {
-  "authorId": "u1",
   "postType": "text",
   "text": "What's the best way to learn system design?"
 }
@@ -202,15 +215,20 @@ Create a text post. The backend automatically classifies the content using AI.
 }
 ```
 
-### POST /posts/poll
+### POST /posts/poll 🔒
 
-Create a poll post.
+Create a poll post. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Request:**
 
 ```json
 {
-  "authorId": "u2",
   "postType": "poll",
   "text": "What's your preferred code editor?",
   "pollOptions": ["VS Code", "Neovim", "JetBrains", "Sublime"]
@@ -219,15 +237,20 @@ Create a poll post.
 
 **Note:** The backend automatically classifies the poll using AI (category, intent, depth, tags).
 
-### POST /posts/{postId}/respond
+### POST /posts/{postId}/respond 🔒
 
-Respond to a post (starts a chat).
+Respond to a post (starts a chat). Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Request:**
 
 ```json
 {
-  "userId": "u2",
   "text": "I would recommend starting with building side projects!",
   "chatType": "direct"
 }
@@ -246,15 +269,20 @@ Respond to a post (starts a chat).
 }
 ```
 
-### POST /posts/{postId}/vote
+### POST /posts/{postId}/vote 🔒
 
-Vote on a poll.
+Vote on a poll. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Request:**
 
 ```json
 {
-  "userId": "u1",
   "option": "React"
 }
 ```
@@ -281,9 +309,15 @@ Vote on a poll.
 
 ## Chats
 
-### GET /users/{userId}/chats
+### GET /me/chats 🔒
 
-Get all chat threads for a user.
+Get all chat threads for the authenticated user. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Query Parameters:**
 
@@ -432,15 +466,20 @@ Get chat with all messages.
 }
 ```
 
-### POST /chats/{chatId}/message
+### POST /chats/{chatId}/message 🔒
 
-Send a message in a chat.
+Send a message in a chat. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Request:**
 
 ```json
 {
-  "senderId": "u1",
   "text": "That's helpful! I'll try that approach."
 }
 ```
@@ -489,27 +528,49 @@ Get chat participants.
 }
 ```
 
-### POST /chats/{chatId}/accept
+### POST /chats/{chatId}/accept 🔒
 
-Accept a group chat invite.
+Accept a group chat invite. Requires authentication. No request body needed.
 
-**Request:**
+**Headers:**
+
+```http
+X-User-ID: u1
+```
+
+**Response:**
 
 ```json
 {
-  "userId": "u3"
+  "success": true,
+  "data": {
+    "success": true,
+    "chatId": "c1",
+    "status": "active"
+  }
 }
 ```
 
-### POST /chats/{chatId}/mute
+### POST /chats/{chatId}/mute 🔒
 
-Mute chat notifications.
+Mute chat notifications. Requires authentication. No request body needed.
 
-**Request:**
+**Headers:**
+
+```http
+X-User-ID: u1
+```
+
+**Response:**
 
 ```json
 {
-  "userId": "u1"
+  "success": true,
+  "data": {
+    "success": true,
+    "chatId": "c1",
+    "status": "muted"
+  }
 }
 ```
 
@@ -517,13 +578,18 @@ Mute chat notifications.
 
 ## Feed
 
-### GET /feed
+### GET /me/feed 🔒
 
-Get personalized feed for a user.
+Get personalized feed for the authenticated user. Requires authentication.
+
+**Headers:**
+
+```http
+X-User-ID: u1
+```
 
 **Query Parameters:**
 
-- `userId` (required): User ID
 - `limit` (optional): Max items (default: 20, max: 50)
 - `cursor` (optional): Pagination cursor
 - `category` (optional): Filter by category

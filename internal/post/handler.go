@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/askme/api/pkg/httputil"
+	"github.com/askme/api/pkg/middleware"
 )
 
 type handler struct {
@@ -34,20 +35,26 @@ func (h *handler) GetPost(w http.ResponseWriter, r *http.Request) {
 
 // CreatePost handles POST /posts
 func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	req, err := httputil.DecodeJSON[CreatePostRequest](r)
 	if err != nil {
 		httputil.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if req.AuthorID == "" {
-		httputil.Error(w, http.StatusBadRequest, "authorId is required")
-		return
-	}
 	if req.Text == "" {
 		httputil.Error(w, http.StatusBadRequest, "text is required")
 		return
 	}
+
+	// Set author from authenticated user
+	req.AuthorID = currentUserID
 
 	resp, err := h.service.CreatePost(r.Context(), req)
 	if err != nil {
@@ -60,16 +67,19 @@ func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 
 // CreatePoll handles POST /posts/poll
 func (h *handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	req, err := httputil.DecodeJSON[CreatePostRequest](r)
 	if err != nil {
 		httputil.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if req.AuthorID == "" {
-		httputil.Error(w, http.StatusBadRequest, "authorId is required")
-		return
-	}
 	if req.Text == "" {
 		httputil.Error(w, http.StatusBadRequest, "text is required")
 		return
@@ -78,6 +88,9 @@ func (h *handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 		httputil.Error(w, http.StatusBadRequest, "at least 2 poll options are required")
 		return
 	}
+
+	// Set author from authenticated user
+	req.AuthorID = currentUserID
 
 	resp, err := h.service.CreatePoll(r.Context(), req)
 	if err != nil {
@@ -90,6 +103,13 @@ func (h *handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 
 // RespondToPost handles POST /posts/{postId}/respond
 func (h *handler) RespondToPost(w http.ResponseWriter, r *http.Request) {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	postID := httputil.PathValue(r, "postId")
 	if postID == "" {
 		httputil.Error(w, http.StatusBadRequest, "postId is required")
@@ -102,14 +122,13 @@ func (h *handler) RespondToPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UserID == "" {
-		httputil.Error(w, http.StatusBadRequest, "userId is required")
-		return
-	}
 	if req.Text == "" {
 		httputil.Error(w, http.StatusBadRequest, "text is required")
 		return
 	}
+
+	// Set user from authenticated user
+	req.UserID = currentUserID
 
 	resp, err := h.service.RespondToPost(r.Context(), postID, req)
 	if err != nil {
@@ -122,6 +141,13 @@ func (h *handler) RespondToPost(w http.ResponseWriter, r *http.Request) {
 
 // Vote handles POST /posts/{postId}/vote
 func (h *handler) Vote(w http.ResponseWriter, r *http.Request) {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	postID := httputil.PathValue(r, "postId")
 	if postID == "" {
 		httputil.Error(w, http.StatusBadRequest, "postId is required")
@@ -134,14 +160,13 @@ func (h *handler) Vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UserID == "" {
-		httputil.Error(w, http.StatusBadRequest, "userId is required")
-		return
-	}
 	if req.Option == "" {
 		httputil.Error(w, http.StatusBadRequest, "option is required")
 		return
 	}
+
+	// Set user from authenticated user
+	req.UserID = currentUserID
 
 	resp, err := h.service.Vote(r.Context(), postID, req)
 	if err != nil {

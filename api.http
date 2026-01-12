@@ -1,5 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:8080
+@currentUser = u-johndoe
 
 ### ==========================================
 ### USERS (seeded: u1-u5)
@@ -33,13 +34,9 @@ Content-Type: application/json
   }
 }
 
-### alex_dev follows sarah_k (u1 -> u4, not yet following)
-POST {{baseUrl}}/users/u1/follow
-Content-Type: application/json
-
-{
-  "followUserId": "u4"
-}
+### Current user follows sarah_k (u4)
+POST {{baseUrl}}/me/follow/u4
+X-User-ID: {{currentUser}}
 
 ### ==========================================
 ### POSTS (seeded: p1-p7)
@@ -66,12 +63,12 @@ GET {{baseUrl}}/posts/p6
 ### Get p7: POLL "Hours of sleep?" by maria_chen
 GET {{baseUrl}}/posts/p7
 
-### Create text post
+### Create text post (author from X-User-ID header)
 POST {{baseUrl}}/posts
 Content-Type: application/json
+X-User-ID: {{currentUser}}
 
 {
-  "authorId": "u1",
   "postType": "text",
   "text": "What's the best way to learn system design?",
   "aiRaw": {
@@ -85,12 +82,12 @@ Content-Type: application/json
   }
 }
 
-### Create poll post
+### Create poll post (author from X-User-ID header)
 POST {{baseUrl}}/posts/poll
 Content-Type: application/json
+X-User-ID: {{currentUser}}
 
 {
-  "authorId": "u5",
   "postType": "poll",
   "text": "What's your preferred code editor?",
   "pollOptions": ["VS Code", "Neovim", "JetBrains", "Sublime"],
@@ -105,23 +102,22 @@ Content-Type: application/json
   }
 }
 
-### sarah_k responds to p6 (Go learning question)
+### Respond to p6 (Go learning question) - user from header
 POST {{baseUrl}}/posts/p6/respond
 Content-Type: application/json
+X-User-ID: {{currentUser}}
 
 {
-  "userId": "u4",
   "text": "The official Go tour is great, plus Ardan Labs courses!",
   "chatType": "direct"
 }
 
-### Vote on p7 (sleep poll) - dev_master votes "Less than 6" (already voted)
-### Try with sarah_k who hasn't voted yet
+### Vote on p7 (sleep poll) - user from header
 POST {{baseUrl}}/posts/p7/vote
 Content-Type: application/json
+X-User-ID: {{currentUser}}
 
 {
-  "userId": "u4",
   "option": "7-8 hours"
 }
 
@@ -129,14 +125,21 @@ Content-Type: application/json
 ### CHATS (seeded: c1-c3)
 ### ==========================================
 
-### Get alex_dev's chats (has c1 as author, c3 as responder)
-GET {{baseUrl}}/users/u1/chats?limit=20
+### Get current user's chats
+GET {{baseUrl}}/me/chats?limit=20
+X-User-ID: {{currentUser}}
 
-### Get maria_chen's chats (has c2 as author)
-GET {{baseUrl}}/users/u2/chats?limit=20
+### Get alex_dev's chats (as u1)
+GET {{baseUrl}}/me/chats?limit=20
+X-User-ID: u1
 
-### Get john_doe's chats (has c1 as responder, c3 as author)
-GET {{baseUrl}}/users/u3/chats?limit=20
+### Get maria_chen's chats (as u2)
+GET {{baseUrl}}/me/chats?limit=20
+X-User-ID: u2
+
+### Get john_doe's chats (as u3)
+GET {{baseUrl}}/me/chats?limit=20
+X-User-ID: u3
 
 ### Get c1: chat about "frontend to backend" (alex_dev + john_doe)
 GET {{baseUrl}}/chats/c1
@@ -150,56 +153,72 @@ GET {{baseUrl}}/chats/c3
 ### Get c1 participants
 GET {{baseUrl}}/chats/c1/participants
 
+### Send message in c1 (sender from header)
+POST {{baseUrl}}/chats/c1/message
+Content-Type: application/json
+X-User-ID: {{currentUser}}
+
+{
+  "text": "That's helpful! I'll start with building a REST API in Go."
+}
+
 ### alex_dev sends message in c1
 POST {{baseUrl}}/chats/c1/message
 Content-Type: application/json
+X-User-ID: u1
 
 {
-  "senderId": "u1",
   "text": "That's helpful! I'll start with building a REST API in Go."
 }
 
 ### john_doe sends message in c1
 POST {{baseUrl}}/chats/c1/message
 Content-Type: application/json
+X-User-ID: u3
 
 {
-  "senderId": "u3",
   "text": "Great choice! Let me know if you need any resources."
 }
 
-### Mute chat c1 (alex_dev mutes)
+### Mute chat c1 (user from header)
 POST {{baseUrl}}/chats/c1/mute
-Content-Type: application/json
-
-{
-  "userId": "u1"
-}
+X-User-ID: {{currentUser}}
 
 ### ==========================================
 ### FEED
 ### ==========================================
 
+### Get feed for current user
+GET {{baseUrl}}/me/feed?limit=20
+X-User-ID: {{currentUser}}
+
 ### Get feed for alex_dev (interests: tech, career)
-GET {{baseUrl}}/feed?userId=u1&limit=20
+GET {{baseUrl}}/me/feed?limit=20
+X-User-ID: u1
 
 ### Get feed for maria_chen (interests: health, lifestyle)
-GET {{baseUrl}}/feed?userId=u2&limit=20
+GET {{baseUrl}}/me/feed?limit=20
+X-User-ID: u2
 
 ### Get feed for sarah_k (interests: relationships, fun)
-GET {{baseUrl}}/feed?userId=u4&limit=20
+GET {{baseUrl}}/me/feed?limit=20
+X-User-ID: u4
 
 ### Get feed with tech category filter
-GET {{baseUrl}}/feed?userId=u1&limit=10&category=tech
+GET {{baseUrl}}/me/feed?limit=10&category=tech
+X-User-ID: u1
 
 ### Get feed with career category filter
-GET {{baseUrl}}/feed?userId=u1&limit=10&category=career
+GET {{baseUrl}}/me/feed?limit=10&category=career
+X-User-ID: u1
 
 ### Get feed with casual depth filter
-GET {{baseUrl}}/feed?userId=u1&limit=10&depth=casual
+GET {{baseUrl}}/me/feed?limit=10&depth=casual
+X-User-ID: u1
 
 ### Get feed with serious depth filter
-GET {{baseUrl}}/feed?userId=u1&limit=10&depth=serious
+GET {{baseUrl}}/me/feed?limit=10&depth=serious
+X-User-ID: u1
 
 ### ==========================================
 ### TAGS (seeded: 10 tags)

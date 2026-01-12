@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/askme/api/pkg/httputil"
+	"github.com/askme/api/pkg/middleware"
 )
 
 type handler struct {
@@ -54,26 +55,23 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	httputil.JSON(w, http.StatusCreated, resp)
 }
 
-// FollowUser handles POST /users/{userId}/follow
+// FollowUser handles POST /me/follow/{userId}
 func (h *handler) FollowUser(w http.ResponseWriter, r *http.Request) {
-	followerID := httputil.PathValue(r, "userId")
-	if followerID == "" {
+	// Get current user from auth context
+	currentUserID := middleware.GetUserID(r.Context())
+	if currentUserID == "" {
+		httputil.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	// Get the user to follow from path
+	followUserID := httputil.PathValue(r, "userId")
+	if followUserID == "" {
 		httputil.Error(w, http.StatusBadRequest, "userId is required")
 		return
 	}
 
-	req, err := httputil.DecodeJSON[FollowUserRequest](r)
-	if err != nil {
-		httputil.Error(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if req.FollowUserID == "" {
-		httputil.Error(w, http.StatusBadRequest, "followUserId is required")
-		return
-	}
-
-	resp, err := h.service.FollowUser(r.Context(), followerID, req.FollowUserID)
+	resp, err := h.service.FollowUser(r.Context(), currentUserID, followUserID)
 	if err != nil {
 		httputil.ErrorFromDomain(w, err)
 		return

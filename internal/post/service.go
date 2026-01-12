@@ -7,20 +7,23 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/askme/api/internal/chat"
 	"github.com/askme/api/internal/domain"
 	"github.com/askme/api/internal/tag"
 )
 
 type service struct {
-	repo       Repository
-	tagService tag.Service
+	repo        Repository
+	tagService  tag.Service
+	chatService chat.Service
 }
 
 // NewService creates a new post service
-func NewService(repo Repository, tagService tag.Service) Service {
+func NewService(repo Repository, tagService tag.Service, chatService chat.Service) Service {
 	return &service{
-		repo:       repo,
-		tagService: tagService,
+		repo:        repo,
+		tagService:  tagService,
+		chatService: chatService,
 	}
 }
 
@@ -145,12 +148,44 @@ func (s *service) RespondToPost(ctx context.Context, postID string, req *Respond
 		return nil, domain.ErrAlreadyExists
 	}
 
-	now := time.Now().UnixMilli()
+	// Get post author
+	author, err := s.repo.GetAuthor(ctx, postID)
+	if err != nil {
+		return nil, fmt.Errorf("get post author: %w", err)
+	}
+	if author == nil {
+		return nil, fmt.Errorf("post author not found")
+	}
 
-	// TODO: Create or get chat, create message
-	// This would involve the chat service
-	chatID := ""    // Placeholder
-	messageID := "" // Placeholder
+	// Don't allow responding to your own post
+	if author.ID == req.UserID {
+		return nil, fmt.Errorf("%w: cannot respond to your own post", domain.ErrInvalidInput)
+	}
+
+	// Determine chat type (default to direct)
+	chatType := domain.ChatTypeDirect
+	if req.ChatType != "" {
+		chatType = req.ChatType
+	}
+
+	// Create chat with author first (for proper role assignment), then responder
+	// In CreateChat: participants[0] = author role, rest = responder role
+	participants := []string{author.ID, req.UserID}
+	chatID, err := s.chatService.CreateChat(ctx, postID, chatType, participants)
+	if err != nil {
+		return nil, fmt.Errorf("create chat: %w", err)
+	}
+
+	// Send the response message
+	msgResp, err := s.chatService.SendMessage(ctx, chatID, &chat.SendMessageRequest{
+		SenderID: req.UserID,
+		Text:     req.Text,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("send message: %w", err)
+	}
+
+	now := time.Now().UnixMilli()
 
 	// Create responded edge
 	if err := s.repo.CreateRespondedEdge(ctx, req.UserID, postID, chatID, now); err != nil {
@@ -159,7 +194,7 @@ func (s *service) RespondToPost(ctx context.Context, postID string, req *Respond
 
 	return &RespondToPostResponse{
 		ChatID:    chatID,
-		MessageID: messageID,
+		MessageID: msgResp.MessageID,
 		CreatedAt: now,
 	}, nil
 }
