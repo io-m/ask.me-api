@@ -77,7 +77,7 @@ const (
 		LET chat = DOCUMENT(edge._to)
 		LET post = DOCUMENT(chat.postId)
 		
-		// Get partner (other participant)
+		// Get partner (first other participant, typically question author or first responder)
 		LET partner = FIRST(
 			FOR otherEdge IN participates_in
 			FILTER otherEdge._to == chat._id
@@ -85,6 +85,21 @@ const (
 			FOR user IN users
 			FILTER user._id == otherEdge._from
 			RETURN user
+		)
+		
+		// Get all participants (only used for group chats, but always fetched for simplicity)
+		LET participants = (
+			FOR participantEdge IN participates_in
+			FILTER participantEdge._to == chat._id
+			FOR user IN users
+			FILTER user._id == participantEdge._from
+			RETURN {
+				id: user._key,
+				username: user.username,
+				avatarUrl: user.avatarUrl,
+				role: participantEdge.role,
+				status: participantEdge.status
+			}
 		)
 		
 		// Get last message
@@ -111,6 +126,7 @@ const (
 		
 		RETURN {
 			id: chat._key,
+			type: chat.type,
 			question: {
 				id: post._key,
 				text: post.text,
@@ -122,6 +138,7 @@ const (
 				username: partner.username,
 				avatarUrl: partner.avatarUrl
 			},
+			participants: chat.type == "group" ? participants : null,
 			lastMessage: {
 				id: lastMsg._key,
 				text: lastMsg.text,

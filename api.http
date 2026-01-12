@@ -1,0 +1,230 @@
+### Variables
+@baseUrl = http://localhost:8080
+
+### ==========================================
+### USERS (seeded: u1-u5)
+### ==========================================
+
+### Get alex_dev (tech enthusiast, has 2 chats)
+GET {{baseUrl}}/users/u1
+
+### Get maria_chen (health/lifestyle)
+GET {{baseUrl}}/users/u2
+
+### Get john_doe (finance/career)
+GET {{baseUrl}}/users/u3
+
+### Get sarah_k (relationships/fun)
+GET {{baseUrl}}/users/u4
+
+### Get dev_master (tech/education)
+GET {{baseUrl}}/users/u5
+
+### Create new user
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "new_user",
+  "interests": ["tech", "finance"],
+  "settings": {
+    "allowDMs": true,
+    "allowTagging": true
+  }
+}
+
+### alex_dev follows sarah_k (u1 -> u4, not yet following)
+POST {{baseUrl}}/users/u1/follow
+Content-Type: application/json
+
+{
+  "followUserId": "u4"
+}
+
+### ==========================================
+### POSTS (seeded: p1-p7)
+### ==========================================
+
+### Get p1: "How do I switch from frontend to backend?" by alex_dev
+GET {{baseUrl}}/posts/p1
+
+### Get p2: "Morning routine for staying productive" by maria_chen
+GET {{baseUrl}}/posts/p2
+
+### Get p3: POLL "Which frontend framework?" by dev_master
+GET {{baseUrl}}/posts/p3
+
+### Get p4: "Just landed my first remote job!" by john_doe
+GET {{baseUrl}}/posts/p4
+
+### Get p5: "Disagreements with partner about finances" by sarah_k
+GET {{baseUrl}}/posts/p5
+
+### Get p6: "Best resources for learning Go?" by alex_dev
+GET {{baseUrl}}/posts/p6
+
+### Get p7: POLL "Hours of sleep?" by maria_chen
+GET {{baseUrl}}/posts/p7
+
+### Create text post
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "authorId": "u1",
+  "postType": "text",
+  "text": "What's the best way to learn system design?",
+  "aiRaw": {
+    "category": "education",
+    "intent": "asking-question",
+    "depth": "serious",
+    "tags": ["system design", "learning"],
+    "confidence": 0.89,
+    "risk": "low",
+    "flags": []
+  }
+}
+
+### Create poll post
+POST {{baseUrl}}/posts/poll
+Content-Type: application/json
+
+{
+  "authorId": "u5",
+  "postType": "poll",
+  "text": "What's your preferred code editor?",
+  "pollOptions": ["VS Code", "Neovim", "JetBrains", "Sublime"],
+  "aiRaw": {
+    "category": "tech",
+    "intent": "seeking-opinion",
+    "depth": "casual",
+    "tags": ["developer tools", "productivity"],
+    "confidence": 0.92,
+    "risk": "low",
+    "flags": []
+  }
+}
+
+### sarah_k responds to p6 (Go learning question)
+POST {{baseUrl}}/posts/p6/respond
+Content-Type: application/json
+
+{
+  "userId": "u4",
+  "text": "The official Go tour is great, plus Ardan Labs courses!",
+  "chatType": "direct"
+}
+
+### Vote on p7 (sleep poll) - dev_master votes "Less than 6" (already voted)
+### Try with sarah_k who hasn't voted yet
+POST {{baseUrl}}/posts/p7/vote
+Content-Type: application/json
+
+{
+  "userId": "u4",
+  "option": "7-8 hours"
+}
+
+### ==========================================
+### CHATS (seeded: c1-c3)
+### ==========================================
+
+### Get alex_dev's chats (has c1 as author, c3 as responder)
+GET {{baseUrl}}/users/u1/chats?limit=20
+
+### Get maria_chen's chats (has c2 as author)
+GET {{baseUrl}}/users/u2/chats?limit=20
+
+### Get john_doe's chats (has c1 as responder, c3 as author)
+GET {{baseUrl}}/users/u3/chats?limit=20
+
+### Get c1: chat about "frontend to backend" (alex_dev + john_doe)
+GET {{baseUrl}}/chats/c1
+
+### Get c2: chat about "morning routine" (maria_chen + dev_master)
+GET {{baseUrl}}/chats/c2
+
+### Get c3: chat about "remote job success" (john_doe + alex_dev)
+GET {{baseUrl}}/chats/c3
+
+### Get c1 participants
+GET {{baseUrl}}/chats/c1/participants
+
+### alex_dev sends message in c1
+POST {{baseUrl}}/chats/c1/message
+Content-Type: application/json
+
+{
+  "senderId": "u1",
+  "text": "That's helpful! I'll start with building a REST API in Go."
+}
+
+### john_doe sends message in c1
+POST {{baseUrl}}/chats/c1/message
+Content-Type: application/json
+
+{
+  "senderId": "u3",
+  "text": "Great choice! Let me know if you need any resources."
+}
+
+### Mute chat c1 (alex_dev mutes)
+POST {{baseUrl}}/chats/c1/mute
+Content-Type: application/json
+
+{
+  "userId": "u1"
+}
+
+### ==========================================
+### FEED
+### ==========================================
+
+### Get feed for alex_dev (interests: tech, career)
+GET {{baseUrl}}/feed?userId=u1&limit=20
+
+### Get feed for maria_chen (interests: health, lifestyle)
+GET {{baseUrl}}/feed?userId=u2&limit=20
+
+### Get feed for sarah_k (interests: relationships, fun)
+GET {{baseUrl}}/feed?userId=u4&limit=20
+
+### Get feed with tech category filter
+GET {{baseUrl}}/feed?userId=u1&limit=10&category=tech
+
+### Get feed with career category filter
+GET {{baseUrl}}/feed?userId=u1&limit=10&category=career
+
+### Get feed with casual depth filter
+GET {{baseUrl}}/feed?userId=u1&limit=10&depth=casual
+
+### Get feed with serious depth filter
+GET {{baseUrl}}/feed?userId=u1&limit=10&depth=serious
+
+### ==========================================
+### TAGS (seeded: 10 tags)
+### ==========================================
+
+### Get career-change tag
+GET {{baseUrl}}/tags/career-change
+
+### Get backend-dev tag
+GET {{baseUrl}}/tags/backend-dev
+
+### Get remote-work tag (most used: 25)
+GET {{baseUrl}}/tags/remote-work
+
+### Get learning tag
+GET {{baseUrl}}/tags/learning
+
+### List all tags (sorted by usage)
+GET {{baseUrl}}/tags?limit=20
+
+### Search tags for "remote"
+GET {{baseUrl}}/tags?q=remote&limit=10
+
+### Search tags for "dev"
+GET {{baseUrl}}/tags?q=dev&limit=10
+
+### Search tags for "health"
+GET {{baseUrl}}/tags?q=health&limit=10

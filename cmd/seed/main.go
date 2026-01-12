@@ -59,7 +59,8 @@ func (s *Seeder) insert(collection string, doc any) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/document/%s", s.baseURL, collection)
+	// Use overwriteMode=replace to upsert (insert or replace if exists)
+	url := fmt.Sprintf("%s/document/%s?overwriteMode=replace", s.baseURL, collection)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -90,6 +91,7 @@ func (s *Seeder) SeedAll() error {
 		{
 			"_key":          "u1",
 			"username":      "alex_dev",
+			"avatarUrl":     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
 			"createdAt":     now - 30*day,
 			"interests":     []string{"tech", "career"},
 			"blockedTopics": []string{},
@@ -99,6 +101,7 @@ func (s *Seeder) SeedAll() error {
 		{
 			"_key":          "u2",
 			"username":      "maria_chen",
+			"avatarUrl":     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
 			"createdAt":     now - 25*day,
 			"interests":     []string{"health", "lifestyle"},
 			"blockedTopics": []string{"politics"},
@@ -108,6 +111,7 @@ func (s *Seeder) SeedAll() error {
 		{
 			"_key":          "u3",
 			"username":      "john_doe",
+			"avatarUrl":     "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop&crop=face",
 			"createdAt":     now - 20*day,
 			"interests":     []string{"finance", "career"},
 			"blockedTopics": []string{},
@@ -117,6 +121,7 @@ func (s *Seeder) SeedAll() error {
 		{
 			"_key":          "u4",
 			"username":      "sarah_k",
+			"avatarUrl":     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=face",
 			"createdAt":     now - 15*day,
 			"interests":     []string{"relationships", "fun"},
 			"blockedTopics": []string{},
@@ -126,6 +131,7 @@ func (s *Seeder) SeedAll() error {
 		{
 			"_key":          "u5",
 			"username":      "dev_master",
+			"avatarUrl":     "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face",
 			"createdAt":     now - 10*day,
 			"interests":     []string{"tech", "education"},
 			"blockedTopics": []string{},
@@ -248,6 +254,19 @@ func (s *Seeder) SeedAll() error {
 			"aiRaw":       map[string]any{"category": "health", "intent": "seeking-opinion", "depth": "casual", "tags": []string{"health tips", "productivity"}, "confidence": 0.91, "risk": "low", "flags": []string{}},
 			"createdAt":   now - 12*60*60*1000,
 		},
+		// Group chat post (tagged multiple users)
+		{
+			"_key":        "p8",
+			"authorId":    "users/u1",
+			"postType":    "text",
+			"text":        "Tech folks! @maria_chen @john_doe @sarah_k - What stack are you using for your side projects in 2026?",
+			"category":    "tech",
+			"intent":      "asking-question",
+			"depth":       "casual",
+			"pollOptions": nil,
+			"aiRaw":       map[string]any{"category": "tech", "intent": "asking-question", "depth": "casual", "tags": []string{"tech", "side projects"}, "confidence": 0.89, "risk": "low", "flags": []string{}},
+			"createdAt":   now - 2*day,
+		},
 	}
 
 	log.Println("Seeding posts...")
@@ -262,6 +281,8 @@ func (s *Seeder) SeedAll() error {
 		{"_key": "c1", "postId": "posts/p1", "type": "direct", "createdAt": now - 6*day, "participantCount": 2},
 		{"_key": "c2", "postId": "posts/p2", "type": "direct", "createdAt": now - 4*day, "participantCount": 2},
 		{"_key": "c3", "postId": "posts/p4", "type": "direct", "createdAt": now - 2*day, "participantCount": 2},
+		// Group chat
+		{"_key": "c4", "postId": "posts/p8", "type": "group", "createdAt": now - 2*day, "participantCount": 4},
 	}
 
 	log.Println("Seeding chats...")
@@ -279,6 +300,11 @@ func (s *Seeder) SeedAll() error {
 		{"_key": "m4", "chatId": "chats/c2", "senderId": "users/u5", "text": "I wake up at 6am, exercise, then start work at 8. No meetings before 10!", "status": "seen", "createdAt": now - 4*day + 30*60*1000},
 		{"_key": "m5", "chatId": "chats/c2", "senderId": "users/u2", "text": "That's impressive! I struggle with the exercise part.", "status": "delivered", "createdAt": now - 3*day},
 		{"_key": "m6", "chatId": "chats/c3", "senderId": "users/u1", "text": "Congrats! What was the key factor in landing the job?", "status": "sent", "createdAt": now - 1*day},
+		// Group chat messages
+		{"_key": "m7", "chatId": "chats/c4", "senderId": "users/u2", "text": "I've been using Next.js + Prisma + PostgreSQL. Really enjoying it!", "status": "seen", "createdAt": now - 2*day + 60*60*1000},
+		{"_key": "m8", "chatId": "chats/c4", "senderId": "users/u3", "text": "Bun + Hono for backend, React for frontend. So fast! 🚀", "status": "seen", "createdAt": now - 2*day + 2*60*60*1000},
+		{"_key": "m9", "chatId": "chats/c4", "senderId": "users/u4", "text": "I'm still on the MERN stack but considering switching to T3.", "status": "delivered", "createdAt": now - 1*day},
+		{"_key": "m10", "chatId": "chats/c4", "senderId": "users/u1", "text": "T3 is great! TypeScript everywhere makes life easier.", "status": "sent", "createdAt": now - 6*60*60*1000},
 	}
 
 	log.Println("Seeding messages...")
@@ -297,6 +323,7 @@ func (s *Seeder) SeedAll() error {
 		{"_from": "users/u4", "_to": "posts/p5", "createdAt": now - 2*day},
 		{"_from": "users/u1", "_to": "posts/p6", "createdAt": now - 1*day},
 		{"_from": "users/u2", "_to": "posts/p7", "createdAt": now - 12*60*60*1000},
+		{"_from": "users/u1", "_to": "posts/p8", "createdAt": now - 2*day}, // Group chat post
 	}
 
 	log.Println("Seeding created edges...")
@@ -348,6 +375,11 @@ func (s *Seeder) SeedAll() error {
 		{"_from": "users/u5", "_to": "chats/c2", "role": "responder", "status": "active", "notificationsEnabled": true, "joinedAt": now - 4*day},
 		{"_from": "users/u3", "_to": "chats/c3", "role": "author", "status": "active", "notificationsEnabled": true, "joinedAt": now - 3*day},
 		{"_from": "users/u1", "_to": "chats/c3", "role": "responder", "status": "active", "notificationsEnabled": true, "joinedAt": now - 2*day},
+		// Group chat participants (c4)
+		{"_from": "users/u1", "_to": "chats/c4", "role": "author", "status": "active", "notificationsEnabled": true, "joinedAt": now - 2*day},
+		{"_from": "users/u2", "_to": "chats/c4", "role": "invited", "status": "active", "notificationsEnabled": true, "joinedAt": now - 2*day},
+		{"_from": "users/u3", "_to": "chats/c4", "role": "invited", "status": "active", "notificationsEnabled": true, "joinedAt": now - 2*day},
+		{"_from": "users/u4", "_to": "chats/c4", "role": "invited", "status": "pending", "notificationsEnabled": false, "joinedAt": nil}, // Not yet accepted
 	}
 
 	log.Println("Seeding participates_in edges...")
@@ -373,6 +405,8 @@ func (s *Seeder) SeedAll() error {
 		{"_from": "posts/p6", "_to": "tags/learning", "confidence": 0.88, "source": "ai"},
 		{"_from": "posts/p7", "_to": "tags/health-tips", "confidence": 0.89, "source": "ai"},
 		{"_from": "posts/p7", "_to": "tags/productivity", "confidence": 0.80, "source": "ai"},
+		{"_from": "posts/p8", "_to": "tags/frontend", "confidence": 0.85, "source": "ai"},
+		{"_from": "posts/p8", "_to": "tags/frameworks", "confidence": 0.82, "source": "ai"},
 	}
 
 	log.Println("Seeding post_has_tag edges...")
@@ -396,6 +430,20 @@ func (s *Seeder) SeedAll() error {
 	log.Println("Seeding voted edges...")
 	for _, e := range voted {
 		if err := s.insert("voted", e); err != nil {
+			log.Printf("Warning: %v", err)
+		}
+	}
+
+	// Seed Edge: tagged (posts -> users) for @mentions in group chat
+	tagged := []map[string]any{
+		{"_from": "posts/p8", "_to": "users/u2", "createdAt": now - 2*day},
+		{"_from": "posts/p8", "_to": "users/u3", "createdAt": now - 2*day},
+		{"_from": "posts/p8", "_to": "users/u4", "createdAt": now - 2*day},
+	}
+
+	log.Println("Seeding tagged edges...")
+	for _, e := range tagged {
+		if err := s.insert("tagged", e); err != nil {
 			log.Printf("Warning: %v", err)
 		}
 	}

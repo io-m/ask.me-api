@@ -11,10 +11,12 @@ import (
 
 	"github.com/askme/api/internal/config"
 	"github.com/askme/api/pkg/arango"
+	"github.com/askme/api/pkg/middleware"
+	"github.com/askme/api/pkg/slogutil"
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slogutil.NewIndentedJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
@@ -39,9 +41,21 @@ func main() {
 	mux := http.NewServeMux()
 	app.RegisterRoutes(mux)
 
+	// Apply middleware chain (order matters: outermost first)
+	// Recovery -> RequestID -> Logger -> SecureHeaders -> CORS -> JSON -> handler
+	handler := middleware.Chain(
+		mux,
+		middleware.Recovery,      // Recover from panics (outermost)
+		middleware.RequestID,     // Add request ID for tracing
+		middleware.Logger,        // Log all requests
+		middleware.SecureHeaders, // Add security headers
+		middleware.CORS(middleware.DefaultCORSConfig()), // Handle CORS
+		middleware.JSON, // Set JSON content type
+	)
+
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,

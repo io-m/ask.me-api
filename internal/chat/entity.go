@@ -66,12 +66,14 @@ type LastMessage struct {
 
 // ChatThread represents a chat thread for listing
 type ChatThread struct {
-	ID          string          `json:"id"`
-	Question    QuestionContext `json:"question"`
-	Partner     ChatPartner     `json:"partner"`
-	LastMessage LastMessage     `json:"lastMessage"`
-	UnreadCount int             `json:"unreadCount"`
-	HasUnread   bool            `json:"hasUnread"`
+	ID           string          `json:"id"`
+	Type         domain.ChatType `json:"type"`
+	Question     QuestionContext `json:"question"`
+	Partner      ChatPartner     `json:"partner"`
+	Participants []Participant   `json:"participants,omitempty"` // Only populated for group chats
+	LastMessage  LastMessage     `json:"lastMessage"`
+	UnreadCount  int             `json:"unreadCount"`
+	HasUnread    bool            `json:"hasUnread"`
 }
 
 // ChatThreadsResponse is the response for listing chat threads
